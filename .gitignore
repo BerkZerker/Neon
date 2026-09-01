@@ -1,0 +1,11 @@
+# Machine-derived contract state is NEVER committed (see SPEC.md, Storage).
+.contracts-cache/
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+.pytest_cache/
+.hypothesis/
