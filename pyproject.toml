@@ -5,6 +5,7 @@ description = "Contract layer: LLM-drafted, human-triaged, machine-enforced per-
 requires-python = ">=3.11"
 dependencies = [
     "pyyaml>=6.0",
+    "types-pyyaml>=6.0.12.20260815",
 ]
 
 [project.optional-dependencies]
