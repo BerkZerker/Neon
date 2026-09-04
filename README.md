@@ -6,7 +6,7 @@ in [SPEC.md](SPEC.md). Python first; GDScript/Godot as backend #2.
 
 ## Layout
 
-```
+```text
 src/neon/
   schema.py           the shared types (fully defined — start by reading it)
   hashing.py          normalized AST hash          -> drift detection
@@ -27,7 +27,7 @@ tests/                stub tests; unskip as you implement
 
 ## Setup
 
-```
+```bash
 uv venv && uv pip install -e ".[dev]"
 source .venv/bin/activate
 pytest            # everything skipped/failing until you build it

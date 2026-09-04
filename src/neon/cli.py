@@ -49,15 +49,70 @@ def main(argv: list[str] | None = None) -> int:
         ("status", "per-function dashboard"),
     ]:
         p = sub.add_parser(name, help=help_text)
-        p.add_argument("path", nargs="?", default=".", type=Path,
-                       help="repo root (default: cwd)")
+        p.add_argument(
+            "path", nargs="?", default=".", type=Path, help="repo root (default: cwd)"
+        )
 
     args = parser.parse_args(argv)
+
+    print("args:", args)
 
     # TODO(you): dispatch. A dict {command_name: handler} beats an
     # if/elif ladder. Each handler: load what it needs, call the owning
     # module, print, return an exit code (drift's is load-bearing — CI
     # keys off it).
+    #
+    # Command responsibilities:
+    # -------------------------------------------------------------------------
+    # 1. scan [path]
+    #    - Zero-execution discovery: backend.discover(path) finds source files,
+    #      backend.extract(file) AST-parses FunctionInfo (qualname, params, etc.).
+    #    - Sidecar loading: sidecar.load(file) reads existing .contracts.yaml.
+    #    - Compare extracted functions vs sidecar entries to identify covered vs
+    #      uncovered functions.
+    #    - Report coverage metrics: total functions found, count/percentage
+    #      covered vs uncovered, and list uncovered functions. (No LLM calls).
+    #
+    # 2. draft [path]
+    #    - Find uncovered functions (or functions needing contract additions).
+    #    - Call drafting.draft(fn, existing) to prompt LLM for proposed PRE,
+    #      POST, RAISES clauses with status=DRAFTED and confidence scores.
+    #    - Compute AST code_hash via hashing.code_hash(fn) for the ContractEntry.
+    #    - Write/update sidecar files via sidecar.save().
+    #
+    # 3. triage [path]
+    #    - Load all sidecars under path via sidecar.load().
+    #    - Build review queue sorted lowest confidence first via triage.triage_queue().
+    #    - Run interactive CLI loop showing function source + proposed clause:
+    #      [c]onfirm, [e]dit, [r]elease, or [s]kip.
+    #    - Call triage.confirm/edit/release to mutate clauses, update author (by)
+    #      and timestamp (at), refresh entry.code_hash to current, and save sidecars.
+    #
+    # 4. check [path]
+    #    - Lower contracts into executable checks.
+    #    - Apply runtime assert wrappers (enforcement.asserts.install()) and/or
+    #      generate Hypothesis property tests (enforcement.proptests.write_tests()).
+    #    - Run the test suite (e.g. pytest) against the target code.
+    #    - Save run outcomes to .contracts-cache/ and print violation reports.
+    #    - Return non-zero exit code if contract violations occur.
+    #
+    # 5. drift [path]
+    #    - AST-parse current functions with backend.extract() and hash them.
+    #    - Load stored ContractEntry objects from existing sidecars.
+    #    - Call drift.check(entries, functions) to classify:
+    #      CURRENT (hashes match), STALE (qualname exists, hash differs),
+    #      RENAMED (qualname gone, identical hash), DELETED (qualname gone, no match).
+    #    - Automatically apply renames via drift.relink().
+    #    - Print drift report.
+    #    - Return non-zero exit code if any confirmed contract is STALE (crucial for CI).
+    #
+    # 6. status [path]
+    #    - Dashboard view: combine sidecars, drift status, and .contracts-cache/ results.
+    #    - Call views.build(path) to evaluate FunctionState for each function
+    #      (PASSING, FAILING, UNTRIAGED, STALE, UNCOVERED).
+    #    - Render a formatted table/overview showing per-function state, clause
+    #      summaries, and repo-wide contract coverage statistics.
+    # -------------------------------------------------------------------------
     print(f"neon {args.command}: not implemented yet (path={args.path})")
     return 2
 
